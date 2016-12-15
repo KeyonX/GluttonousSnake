@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="jquery.js"></script>
+    <style>
+        #uiInterface{
+            height: 832px;  width: 832px;
+            border: solid indianred;position: absolute;
+            left: 20%;
+            top: 20%;
+        }
+        .area{
+            height: 50px;
+            width: 50px;
+            background-color: white;
+            border: 1px solid #808080;
+            font-size: 3em;
+            float: left;
+        }
+        .cell-cake{
+            background-color: #9091dc;
+        }
+    </style>
+</head>
+<body style="text-align: center;position: relative;">
+    <div  id="uiInterface" ></div>
+    <div id="mineTemplate" style="display: none">
+        <div class="area"  id="4_5" ></div>
+    </div>
+</body>
+<script>
+    var maxCol = new Number(16);
+    var maxRow = new Number(16);
+    var currentCake = '';//没有cake,或者cake被吃掉
+    var snake;
+    $(function(){
+        //生成界面
+        for(var i=0;i<maxRow;i++){
+            for(var j=0;j<maxCol;j++){
+                var area = $('#mineTemplate .area').clone();
+                area.attr('id',i+'_'+j);
+                $('div#uiInterface').append(area);
+            }
+        }
+        //方向监听
+        $(window).on('keydown',function(e){
+            if(e.keyCode<=40&& e.keyCode>=37){
+                if(Math.abs(e.keyCode-snake.direction)!=2){
+                    snake.direction= e.keyCode;
+                }
+            }
+        });
+        //生成snake
+        snake = new Snake('cell-cake');
+        snake.move();
+        //生成cake
+        generateCake();
+    });
+
+    function Snake(cellClass){
+        var curSnake = new Object();
+        curSnake.direction=39;//默认值  方向 ←37 ↑38 →39 ↓40
+        curSnake.head=maxCol/2+'_'+maxRow/2;//头部
+        curSnake.tail=curSnake.head;//尾部
+        curSnake.body = new Array();
+        curSnake.contains = function(cell){
+            for(var i=0;i<this.body.length;i++){
+                if(this.body[i]==cell){
+                    return true;
+                }
+            }
+            return false;
+        };
+        curSnake.nextStep = function(){
+            var po = this.head.split('_');
+            var x=parseInt(po[0]),y=parseInt(po[1]);
+            if(this.direction == 39){// 右
+                y++;
+            }
+            if(this.direction == 38){// 上
+                x--;
+            }
+            if(this.direction == 40){// 下
+                x++;
+            }
+            if(this.direction == 37){// 左
+                y--;
+            }
+            var nextCell = x+'_'+y;
+            //出界
+            if(x<0||x>maxCol||y<0||y>maxRow){
+                gameOver();
+            }
+            //咬住尾巴
+            if(this.contains(nextCell)){
+                gameOver();
+            }
+            return nextCell;
+        };
+        curSnake.move = function(){
+            setInterval(function(){
+                //元素变动
+                curSnake.head = curSnake.nextStep();
+                curSnake.body.push(curSnake.head);
+                if(curSnake.head==currentCake){//碰到cake,吃掉
+                    curSnake.head = curSnake.nextStep();
+                    curSnake.body.push(curSnake.head);
+                    currentCake='';
+                }
+                curSnake.tail = curSnake.body.shift();
+                //样式变换
+                $('#'+curSnake.tail).removeClass(cellClass);
+                $('#'+curSnake.head).addClass(cellClass);
+            },100);
+        };
+        //初始化body及样式
+        curSnake.body.push(this.head);
+        $('#'+this.head).addClass('cell-cake');
+        return curSnake;
+    }
+    function generateCake(){
+        setInterval(function(){
+            if(currentCake==''){
+                do{
+                    var rowNum = Math.ceil(Math.random()*(maxRow-1));
+                    var colNum = Math.ceil(Math.random()*(maxCol-1));
+                }
+                while(snake.contains(rowNum+'_'+colNum));
+                $('#'+rowNum+'_'+colNum).addClass('cell-cake');
+                currentCake = rowNum+'_'+colNum;
+            }
+        },50);
+    }
+    function gameOver(){
+        alert('Game Over!');
+        window.location.reload();
+    }
+</script>
+</html>
